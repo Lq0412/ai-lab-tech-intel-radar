@@ -1,9 +1,9 @@
 # AI 技术情报雷达 · 开发进度
 
-> 最后更新：2026-06-08  
-> 工作目录：`C:\Users\EDY\Desktop\ai-lab-tech-intel-radar\.worktrees\radar-mvp`  
-> 分支：`feature/radar-mvp`  
-> 最新提交：`803f743`（worktree `feature/radar-mvp`）
+> 最后更新：2026-06-08
+> 工作目录：`C:\Users\Lq304\Desktop\ai-lab-tech-intel-radar`
+> 分支：`main`（已合并 `feature/radar-mvp`）
+> 最新提交：`6afb4fe`（main）
 
 ---
 
@@ -15,8 +15,12 @@
 | 测试 | ✅ 56 passed |
 | DeepSeek 配置 | ✅ 默认 `deepseek-v4-pro` |
 | 精选改造（Top 8 + 分源配额） | ✅ 已提交 `f94f2e6` |
-| 飞书推送 + GitHub Actions | ✅ 代码就绪，待配置 Secrets |
-| 真实数据全量验证（Task 5） | ⏸️ **进行中，已中断** |
+| feature/radar-mvp 合并到 main | ✅ 已合并 |
+| 真实数据全量验证 | ✅ 完成（1966→1104→45→8推荐+36观察） |
+| 飞书推送 | ✅ 已验证通过 |
+| GitHub Secrets 配置 | ✅ `DEEPSEEK_API_KEY` / `GH_TOKEN` / `FEISHU_WEBHOOK_URL` |
+| GitHub Actions 验证 | ⏳ 手动触发中，等待结果 |
+| report.md 移除 git 跟踪 | ✅ 已加入 .gitignore |
 
 ---
 
@@ -55,70 +59,44 @@
 
 ---
 
-## 三、中断时的现场数据（`radar.db`）
+## 三、全量验证数据（新机器重跑）
 
-Task 5 真实验证跑了一半后手动中断：
+方案 B 全量重来，结果如下：
 
 | 指标 | 数值 |
 |------|------|
-| 采集条目 | 1945 |
-| 去重后唯一条目 | 1105 |
-| 已 LLM 分析 | **31**（目标配额约 50） |
-| 已分析 · GitHub | 20 |
-| 已分析 · Hugging Face | 11 |
-| 已分析 · RSS | **0**（配额 15，尚未轮到或中断前未完成） |
-| 周报 `report.md` | ❌ 未基于本次新数据重新生成 |
+| 采集条目 | 1966 |
+| 去重聚类后 | 1104 |
+| 已 LLM 分析 | **45**（GitHub 20 + HF 15 + RSS 10） |
+| 周报「建议跟进」 | **8**（符合 Top 8 限制） |
+| 周报「观察列表」 | 36 |
+| 三源覆盖 | ✅ GitHub / HuggingFace / RSS 均有 |
+| 飞书推送 | ✅ 已验证 |
 
 > `radar.db` 在 `.gitignore` 中，不随 git 提交；换机器需重跑 `collect`。
 
 ---
 
-## 四、回家后续做清单
+## 四、续做清单
 
 ### 必做（完成雏形演示）
 
-- [ ] **Step 1**：进入 worktree
-
-```powershell
-cd C:\Users\EDY\Desktop\ai-lab-tech-intel-radar\.worktrees\radar-mvp
-```
-
-- [ ] **Step 2**：续跑或重跑分析
-
-```powershell
-# 方案 A：接着分析（会 upsert 已分析条目，补全剩余配额）
-radar analyze
-radar report --out report.md
-
-# 方案 B：全量重来（推荐，结果更干净）
-Remove-Item radar.db
-radar collect
-radar process
-radar analyze    # 约 15–20 分钟，~50 条配额
-radar report --out report.md
-```
-
-- [ ] **Step 3**：验收周报
-
-打开 `report.md`，确认：
-
-- 「建议跟进」**≤ 8 项**
-- Top 推荐含 GitHub 工具 / HF 模型
-- 观察列表中有 RSS 官方博客条目（若 RSS 配额分析完成）
-- 条目有摘要、综合分、能力边界
+- [x] **Step 1**：新机器环境搭建，安装依赖
+- [x] **Step 2**：全量重来（方案 B）`collect → process → analyze → report`
+- [x] **Step 3**：验收周报（8 条推荐、三源覆盖、摘要/分数/边界齐全）
 
 ### 选做（上线自动化）
 
-- [ ] `.env` 填入 `FEISHU_WEBHOOK_URL`，测试 `radar notify --out report.md`
-- [ ] `git push -u origin feature/radar-mvp`，创建 PR 合并 `main`
-- [ ] GitHub 仓库 Secrets：`DEEPSEEK_API_KEY`、`GITHUB_TOKEN`、`FEISHU_WEBHOOK_URL`
-- [ ] Actions 页手动 `workflow_dispatch` 触发一次验证
+- [x] 飞书推送验证通过 `radar notify --out report.md`
+- [x] `feature/radar-mvp` 合并到 `main`，推送远程
+- [x] GitHub Secrets 配置：`DEEPSEEK_API_KEY`、`GH_TOKEN`、`FEISHU_WEBHOOK_URL`
+- [ ] Actions 手动 `workflow_dispatch` 验证（已触发，等待结果）
 
 ### 可选优化（不阻塞演示）
 
-- [ ] 若「建议跟进」仍偏多：调高 `tool_framework` 阈值（如 3.8 → 4.0）
-- [ ] 从 git 移除已跟踪的 `report.md`（生成物）
-- [ ] 主仓库 `main` 同步 worktree 代码（当前 main 仅有文档）
+- [ ] 调整数据源（加入中文源、arXiv 等）
+- [x] 从 git 移除已跟踪的 `report.md`（生成物）
+- [x] 主仓库 `main` 同步代码（已合并 feature/radar-mvp）
 
 ---
 
@@ -194,5 +172,7 @@ ba567ac chore: scaffold tech-intel-radar python project
 | 2026-06-08 | 精选改造 `f94f2e6` 完成；Task 5 重采 1966 条后 analyze 中断于 31/50 |
 | 2026-06-08 | 进度文档创建并提交 `1f6f8da`，README 增加进度链接，暂停开发 |
 | 2026-06-08 | 主仓库同步进度文档副本（`docs/superpowers/plans/`） |
+| 2026-06-08 | 新机器：合并 feature/radar-mvp → main，全量验证通过（1966→1104→45→8推荐） |
+| 2026-06-08 | 飞书推送验证通过，GitHub Secrets 配置完成，Actions 手动触发 |
 
 **下次更新时**：在「九、进度更新日志」追加一行，并修改文首「最后更新」日期与第三节数据库数字。
