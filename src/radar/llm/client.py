@@ -12,8 +12,8 @@ def _strip_fences(text: str) -> str:
 
 
 class LLMClient:
-    def __init__(self, sdk: Any | None = None, model: str = "gpt-4o-mini",
-                 api_key: str = "", base_url: str = ""):
+    def __init__(self, sdk: Any | None = None, model: str = "deepseek-v4-pro",
+                 api_key: str = "", base_url: str = "https://api.deepseek.com"):
         if sdk is None:
             from openai import OpenAI
             kwargs: dict[str, Any] = {"api_key": api_key}

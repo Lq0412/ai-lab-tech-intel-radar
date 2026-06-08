@@ -35,8 +35,8 @@ class Settings:
 @dataclass
 class RuntimeConfig:
     openai_api_key: str = ""
-    openai_base_url: str = ""
-    model: str = "gpt-4o-mini"
+    openai_base_url: str = "https://api.deepseek.com"
+    model: str = "deepseek-v4-pro"
     github_token: str = ""
     db_path: str = "radar.db"
 
@@ -64,10 +64,11 @@ def load_settings(path: Path) -> Settings:
 
 
 def load_runtime() -> RuntimeConfig:
+    api_key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY", "")
     return RuntimeConfig(
-        openai_api_key=os.getenv("OPENAI_API_KEY", ""),
-        openai_base_url=os.getenv("OPENAI_BASE_URL", ""),
-        model=os.getenv("RADAR_MODEL", "gpt-4o-mini"),
+        openai_api_key=api_key,
+        openai_base_url=os.getenv("OPENAI_BASE_URL", "https://api.deepseek.com"),
+        model=os.getenv("RADAR_MODEL", "deepseek-v4-pro"),
         github_token=os.getenv("GITHUB_TOKEN", ""),
         db_path=os.getenv("RADAR_DB_PATH", "radar.db"),
     )

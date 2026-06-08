@@ -44,7 +44,7 @@
 
 ```bash
 pip install -e ".[dev]"
-cp .env.example .env   # 填入 OPENAI_API_KEY / GITHUB_TOKEN
+cp .env.example .env   # 填入 DEEPSEEK_API_KEY / GITHUB_TOKEN
 
 radar collect   # 采集三类信源入库
 radar process   # 去重、聚类、过滤
