@@ -12,7 +12,7 @@ API = "https://api.github.com/search/repositories"
 
 class GithubCollector:
     def __init__(self, client: Any | None = None, token: str = "",
-                 per_page: int = 30):
+                 per_page: int = 50):
         self.client = client or httpx.Client(timeout=20)
         self.token = token
         self.per_page = per_page

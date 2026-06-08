@@ -15,10 +15,12 @@ ranking:
     paper: 4.0
     article: 4.2
     default: 4.0
+  max_recommendations: 8
 
 filter:
   github_min_stars: 500
   github_min_weekly_growth: 50
+  github_per_page: 50
   keywords:
     - ai
     - llm
@@ -31,3 +33,9 @@ filter:
 cluster:
   title_similarity_threshold: 0.6
   time_window_days: 7
+
+analyze:
+  quota:
+    github: 20
+    huggingface: 15
+    rss: 15

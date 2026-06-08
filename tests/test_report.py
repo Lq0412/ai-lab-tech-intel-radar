@@ -35,3 +35,17 @@ def test_render_report_lists_top_recommendations_with_details():
 def test_render_report_handles_empty():
     md = render_report([], week="2026-W23")
     assert "本周无可推荐条目" in md
+
+
+def test_render_report_caps_recommendations():
+    rows = [row(f"工具{i}", "建议跟进", score=4.9 - i * 0.1) for i in range(12)]
+    md = render_report(rows, week="2026-W23", max_recommendations=8)
+    assert "建议跟进：8 项" in md
+    assert "保持观察：4 项" in md
+    assert "### 9." not in md
+
+
+def test_render_report_no_cap_keeps_all():
+    rows = [row(f"工具{i}", "建议跟进", score=4.5) for i in range(10)]
+    md = render_report(rows, week="2026-W23")
+    assert "建议跟进：10 项" in md

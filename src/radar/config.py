@@ -27,6 +27,10 @@ class Settings:
     keywords: list[str]
     title_similarity_threshold: float
     time_window_days: int
+    max_recommendations: int = 8
+    github_per_page: int = 50
+    analyze_quota: dict[str, int] = field(
+        default_factory=lambda: {"github": 20, "huggingface": 15, "rss": 15})
 
     def threshold_for(self, category: str) -> float:
         return self.thresholds.get(category, self.thresholds["default"])
@@ -51,6 +55,7 @@ def load_settings(path: Path) -> Settings:
     ranking = data["ranking"]
     flt = data["filter"]
     cluster = data["cluster"]
+    analyze = data.get("analyze", {})
     return Settings(
         weights=ranking["weights"],
         tier_weight=ranking["tier_weight"],
@@ -60,6 +65,10 @@ def load_settings(path: Path) -> Settings:
         keywords=[k.lower() for k in flt["keywords"]],
         title_similarity_threshold=cluster["title_similarity_threshold"],
         time_window_days=cluster["time_window_days"],
+        max_recommendations=ranking.get("max_recommendations", 8),
+        github_per_page=flt.get("github_per_page", 50),
+        analyze_quota=analyze.get(
+            "quota", {"github": 20, "huggingface": 15, "rss": 15}),
     )
 
 

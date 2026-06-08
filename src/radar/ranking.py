@@ -86,3 +86,19 @@ def select_candidates(items: list[TechItem], limit: int | None,
         reverse=True,
     )
     return ranked[:limit]
+
+
+def select_by_quota(items: list[TechItem], quota: dict[str, int],
+                    today: str, settings: Settings) -> list[TechItem]:
+    """Pick top signal_score items per source according to quota."""
+    selected: list[TechItem] = []
+    for source, n in quota.items():
+        if n <= 0:
+            continue
+        group = sorted(
+            [it for it in items if it.source == source],
+            key=lambda it: signal_score(it, settings, today),
+            reverse=True,
+        )
+        selected.extend(group[:n])
+    return selected

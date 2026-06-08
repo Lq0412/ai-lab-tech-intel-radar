@@ -19,3 +19,13 @@ sources:
     tier: T1.5
     type: model_index
     kind: huggingface
+  - name: GitHub Trending LLM
+    url: "topic:llm stars:>500"
+    tier: T1.5
+    type: repo_index
+    kind: github
+  - name: GitHub Trending Agent
+    url: "topic:agent stars:>300"
+    tier: T1.5
+    type: repo_index
+    kind: github

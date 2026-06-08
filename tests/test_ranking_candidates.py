@@ -44,3 +44,32 @@ def test_select_candidates_limits_and_prioritizes_github():
     picked = select_candidates(items, limit=2, today="2026-06-08", settings=s)
     assert len(picked) == 2
     assert picked[0].source in ("github", "huggingface")
+
+
+def test_select_by_quota_allocates_per_source():
+    from radar.ranking import select_by_quota
+    s = settings()
+    items = (
+        [item("github", f"gh{i}", stars=1000 * (i + 1)) for i in range(5)]
+        + [item("huggingface", f"hf{i}", downloads=1000 * (i + 1)) for i in range(5)]
+        + [item("rss", f"rss{i}", tier="T1") for i in range(5)]
+    )
+    picked = select_by_quota(
+        items, {"github": 2, "huggingface": 3, "rss": 1},
+        today="2026-06-08", settings=s)
+    by_source = {}
+    for it in picked:
+        by_source[it.source] = by_source.get(it.source, 0) + 1
+    assert by_source == {"github": 2, "huggingface": 3, "rss": 1}
+
+
+def test_select_by_quota_picks_highest_signal():
+    from radar.ranking import select_by_quota
+    s = settings()
+    items = [
+        item("github", "low", stars=600),
+        item("github", "high", stars=90000),
+    ]
+    picked = select_by_quota(items, {"github": 1}, today="2026-06-08", settings=s)
+    assert len(picked) == 1
+    assert picked[0].title == "high"

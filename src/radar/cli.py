@@ -18,7 +18,8 @@ from radar.models import Analysis
 from radar.pipeline.cluster import cluster_items
 from radar.pipeline.filter import apply_filters
 from radar.notify import send_feishu
-from radar.ranking import compute_quality, recommend, select_candidates
+from radar.ranking import (compute_quality, recommend, select_by_quota,
+                           select_candidates)
 from radar.report import ReportRow, render_report
 from radar.storage import Repository
 
@@ -29,7 +30,8 @@ def run_collect(repo: Repository, settings: Settings, runtime: RuntimeConfig,
                 now: str) -> int:
     sources = load_sources(CONFIG_DIR / "sources.yaml")
     collectors = {
-        "github": GithubCollector(token=runtime.github_token),
+        "github": GithubCollector(token=runtime.github_token,
+                                  per_page=settings.github_per_page),
         "huggingface": HuggingFaceCollector(),
         "rss": RssCollector(),
     }
@@ -65,9 +67,13 @@ def run_process(repo: Repository, settings: Settings) -> int:
 
 
 def run_analyze(repo: Repository, settings: Settings, client: LLMClient,
-                today: str, limit: int | None = None) -> int:
-    primaries = select_candidates(
-        repo.list_items(only_unique=True), limit, today, settings)
+                today: str, limit: int | None = None,
+                quota: dict[str, int] | None = None) -> int:
+    items = repo.list_items(only_unique=True)
+    if quota:
+        primaries = select_by_quota(items, quota, today, settings)
+    else:
+        primaries = select_candidates(items, limit, today, settings)
     analyzed = 0
     for item in primaries:
         item_id = repo.item_id_by_raw(item.raw_id)
@@ -88,7 +94,8 @@ def run_analyze(repo: Repository, settings: Settings, client: LLMClient,
     return analyzed
 
 
-def run_report(repo: Repository, week: str) -> str:
+def run_report(repo: Repository, week: str,
+               max_recommendations: int | None = None) -> str:
     rows: list[ReportRow] = []
     for item in repo.list_items(only_unique=True):
         item_id = repo.item_id_by_raw(item.raw_id)
@@ -101,7 +108,8 @@ def run_report(repo: Repository, week: str) -> str:
             source_tier=item.source_tier, summary=a["summary"],
             good_for=a["good_for"], not_good_for=a["not_good_for"],
             risks=a["risks"], url=item.url, related_urls=[]))
-    return render_report(rows, week=week)
+    return render_report(rows, week=week,
+                         max_recommendations=max_recommendations)
 
 
 def run_review(repo: Repository, item_id: int, verdict: str, note: str,
@@ -123,6 +131,8 @@ def main(argv: list[str] | None = None) -> int:
                                  "notify", "review", "all"])
     parser.add_argument("--out", default="report.md")
     parser.add_argument("--limit", type=int, default=50)
+    parser.add_argument("--no-quota", action="store_true",
+                        help="忽略分源配额，改用 --limit 一刀切")
     parser.add_argument("--item-id", type=int)
     parser.add_argument("--verdict", default="")
     parser.add_argument("--note", default="")
@@ -143,9 +153,12 @@ def main(argv: list[str] | None = None) -> int:
         client = LLMClient(model=runtime.model, api_key=runtime.openai_api_key,
                            base_url=runtime.openai_base_url)
         limit = args.limit if args.limit > 0 else None
-        print("analyzed:", run_analyze(repo, settings, client, today, limit=limit))
+        quota = None if args.no_quota else settings.analyze_quota
+        print("analyzed:",
+              run_analyze(repo, settings, client, today, limit=limit, quota=quota))
     if args.command in ("report", "all"):
-        md = run_report(repo, week=_iso_week(today))
+        md = run_report(repo, week=_iso_week(today),
+                        max_recommendations=settings.max_recommendations)
         Path(args.out).write_text(md, encoding="utf-8")
         print("report written:", args.out)
     if args.command == "notify":

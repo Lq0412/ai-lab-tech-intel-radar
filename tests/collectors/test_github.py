@@ -45,3 +45,17 @@ def test_github_collector_maps_to_techitem():
     assert it.metrics["stars"] == 85000
     assert it.metrics["language"] == "Python"
     assert it.title == "vllm-project/vllm"
+
+
+def test_github_collector_default_per_page_is_50():
+    collector = GithubCollector(client=FakeClient({"items": []}), token="")
+    assert collector.per_page == 50
+
+
+def test_github_collector_passes_per_page_param():
+    fake = FakeClient({"items": []})
+    source = Source(name="gh", url="topic:llm stars:>500",
+                    tier="T1.5", type="repo_index", kind="github")
+    GithubCollector(client=fake, token="", per_page=50).collect(
+        source, now="2026-06-08T00:00:00")
+    assert fake.last_params["per_page"] == 50

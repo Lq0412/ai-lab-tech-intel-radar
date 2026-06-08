@@ -80,6 +80,27 @@ def test_run_analyze_respects_limit():
     assert len(repo.list_scored()) == 2
 
 
+def test_run_analyze_uses_quota():
+    repo = Repository(":memory:")
+    repo.init_schema()
+    repo.upsert_item(TechItem(
+        source="github", source_tier="T1.5", source_type="repo_index",
+        title="gh-llm", url="https://github.com/x/gh",
+        description="LLM inference", published_at="2026-06-08",
+        metrics={"stars": 9000}, raw_id="github:gh",
+        collected_at="2026-06-08T00:00:00"))
+    repo.upsert_item(TechItem(
+        source="huggingface", source_tier="T1.5", source_type="model_index",
+        title="hf-model", url="https://huggingface.co/x/hf",
+        description="LLM model", published_at="2026-06-08",
+        metrics={"downloads": 50000, "likes": 100}, raw_id="huggingface:hf",
+        collected_at="2026-06-08T00:00:00"))
+    cli.run_process(repo, settings())
+    cli.run_analyze(repo, settings(), client=StubClient(), today="2026-06-08",
+                    quota={"github": 1, "huggingface": 0, "rss": 0})
+    assert len(repo.list_scored()) == 1
+
+
 def test_run_review_persists_verdict():
     repo = make_repo_with_item()
     item_id = repo.item_id_by_raw("github:vllm-project/vllm")

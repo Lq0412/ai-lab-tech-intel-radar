@@ -28,7 +28,7 @@ jobs:
         run: |
           radar collect
           radar process
-          radar analyze --limit 50
+          radar analyze
           radar report --out report.md
 
       - name: Notify Feishu
