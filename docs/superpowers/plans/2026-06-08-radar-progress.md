@@ -3,7 +3,7 @@
 > 最后更新：2026-06-08  
 > 工作目录：`C:\Users\EDY\Desktop\ai-lab-tech-intel-radar\.worktrees\radar-mvp`  
 > 分支：`feature/radar-mvp`  
-> 最新提交：`1f6f8da`
+> 最新提交：`803f743`
 
 ---
 
@@ -148,6 +148,7 @@ radar analyze --no-quota --limit 50   # 旧行为
 ## 六、Git 提交历史（近期）
 
 ```text
+803f743 docs: update progress log with handoff commit ref
 1f6f8da docs: add development progress handoff document
 f94f2e6 feat: precision tuning with top-8 report, per-source quota, and expanded github collection
 99963db feat: add analyze limit, feishu notify, and weekly github action
@@ -158,7 +159,7 @@ eb1f28e feat: switch default llm to deepseek-v4-pro
 ba567ac chore: scaffold tech-intel-radar python project
 ```
 
-工作区状态：**干净**（`1f6f8da` 之后无未提交改动）。
+工作区状态：**干净**（进度文档已落盘，见下方更新日志）。
 
 ---
 
