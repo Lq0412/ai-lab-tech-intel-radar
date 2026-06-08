@@ -1,0 +1,73 @@
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+
+@dataclass
+class Source:
+    name: str
+    url: str
+    tier: str
+    type: str
+    kind: str  # "rss" | "github" | "huggingface"
+
+
+@dataclass
+class Settings:
+    weights: dict[str, float]
+    tier_weight: dict[str, int]
+    thresholds: dict[str, float]
+    github_min_stars: int
+    github_min_weekly_growth: int
+    keywords: list[str]
+    title_similarity_threshold: float
+    time_window_days: int
+
+    def threshold_for(self, category: str) -> float:
+        return self.thresholds.get(category, self.thresholds["default"])
+
+
+@dataclass
+class RuntimeConfig:
+    openai_api_key: str = ""
+    openai_base_url: str = ""
+    model: str = "gpt-4o-mini"
+    github_token: str = ""
+    db_path: str = "radar.db"
+
+
+def load_sources(path: Path) -> list[Source]:
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    return [Source(**entry) for entry in data["sources"]]
+
+
+def load_settings(path: Path) -> Settings:
+    data: dict[str, Any] = yaml.safe_load(path.read_text(encoding="utf-8"))
+    ranking = data["ranking"]
+    flt = data["filter"]
+    cluster = data["cluster"]
+    return Settings(
+        weights=ranking["weights"],
+        tier_weight=ranking["tier_weight"],
+        thresholds=ranking["thresholds"],
+        github_min_stars=flt["github_min_stars"],
+        github_min_weekly_growth=flt["github_min_weekly_growth"],
+        keywords=[k.lower() for k in flt["keywords"]],
+        title_similarity_threshold=cluster["title_similarity_threshold"],
+        time_window_days=cluster["time_window_days"],
+    )
+
+
+def load_runtime() -> RuntimeConfig:
+    return RuntimeConfig(
+        openai_api_key=os.getenv("OPENAI_API_KEY", ""),
+        openai_base_url=os.getenv("OPENAI_BASE_URL", ""),
+        model=os.getenv("RADAR_MODEL", "gpt-4o-mini"),
+        github_token=os.getenv("GITHUB_TOKEN", ""),
+        db_path=os.getenv("RADAR_DB_PATH", "radar.db"),
+    )

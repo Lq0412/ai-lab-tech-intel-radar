@@ -1,0 +1,33 @@
+ranking:
+  weights:
+    practicality: 0.35
+    influence: 0.30
+    follow_cost: 0.20
+    source_tier: 0.10
+    freshness: 0.05
+  tier_weight:
+    T1: 5
+    T1.5: 4
+    T2: 2
+  thresholds:
+    model: 3.5
+    tool_framework: 3.8
+    paper: 4.0
+    article: 4.2
+    default: 4.0
+
+filter:
+  github_min_stars: 500
+  github_min_weekly_growth: 50
+  keywords:
+    - ai
+    - llm
+    - model
+    - inference
+    - agent
+    - rag
+    - transformer
+
+cluster:
+  title_similarity_threshold: 0.6
+  time_window_days: 7

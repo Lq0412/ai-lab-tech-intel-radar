@@ -1,0 +1,21 @@
+sources:
+  - name: OpenAI Blog
+    url: https://openai.com/news/rss.xml
+    tier: T1
+    type: official_blog
+    kind: rss
+  - name: Hugging Face Blog
+    url: https://huggingface.co/blog/feed.xml
+    tier: T1
+    type: official_blog
+    kind: rss
+  - name: GitHub Trending AI
+    url: "topic:artificial-intelligence stars:>500"
+    tier: T1.5
+    type: repo_index
+    kind: github
+  - name: Hugging Face Models
+    url: "pipeline_tag:text-generation"
+    tier: T1.5
+    type: model_index
+    kind: huggingface
