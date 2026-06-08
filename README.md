@@ -7,6 +7,7 @@
 | 文档 | 说明 |
 | --- | --- |
 | [方案设计](docs/AI技术情报雷达-方案设计.md) | 正式交付物：质疑与假设、架构设计、关键决策、LLM 使用说明 |
+| [开发进度](docs/superpowers/plans/2026-06-08-radar-progress.md) | 当前进度、中断现场、回家续做清单 |
 | [架构图](docs/assets/architecture.png) | 系统架构示意图 |
 
 ## 参考材料
