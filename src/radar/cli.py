@@ -102,6 +102,11 @@ def run_report(repo: Repository, week: str) -> str:
     return render_report(rows, week=week)
 
 
+def run_review(repo: Repository, item_id: int, verdict: str, note: str,
+               reviewed_at: str) -> None:
+    repo.save_review(item_id, verdict=verdict, note=note, reviewed_at=reviewed_at)
+
+
 def _iso_week(today: str) -> str:
     d = date.fromisoformat(today)
     y, w, _ = d.isocalendar()
@@ -112,8 +117,12 @@ def main(argv: list[str] | None = None) -> int:
     load_dotenv()
     parser = argparse.ArgumentParser(prog="radar")
     parser.add_argument("command",
-                        choices=["collect", "process", "analyze", "report", "all"])
+                        choices=["collect", "process", "analyze", "report",
+                                 "review", "all"])
     parser.add_argument("--out", default="report.md")
+    parser.add_argument("--item-id", type=int)
+    parser.add_argument("--verdict", default="")
+    parser.add_argument("--note", default="")
     args = parser.parse_args(argv)
 
     runtime = load_runtime()
@@ -135,6 +144,12 @@ def main(argv: list[str] | None = None) -> int:
         md = run_report(repo, week=_iso_week(today))
         Path(args.out).write_text(md, encoding="utf-8")
         print("report written:", args.out)
+    if args.command == "review":
+        if args.item_id is None:
+            parser.error("--item-id is required for review")
+        run_review(repo, item_id=args.item_id, verdict=args.verdict,
+                   note=args.note, reviewed_at=today)
+        print("review saved for item", args.item_id)
     repo.close()
     return 0
 

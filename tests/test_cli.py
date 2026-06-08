@@ -60,3 +60,15 @@ def test_run_report_renders_markdown():
     md = cli.run_report(repo, week="2026-W23")
     assert "AI 技术情报周报 2026-W23" in md
     assert "vLLM inference" in md
+
+
+def test_run_review_persists_verdict():
+    repo = make_repo_with_item()
+    item_id = repo.item_id_by_raw("github:vllm-project/vllm")
+    cli.run_review(repo, item_id=item_id, verdict="推荐正确",
+                   note="已安排复现", reviewed_at="2026-06-08")
+    row = repo.conn.execute(
+        "SELECT verdict, note FROM reviews WHERE item_id=?", (item_id,)
+    ).fetchone()
+    assert row["verdict"] == "推荐正确"
+    assert row["note"] == "已安排复现"
