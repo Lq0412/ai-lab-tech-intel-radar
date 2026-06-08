@@ -1,5 +1,6 @@
 # AI 技术情报雷达方案设计
 
+> 作者：林锵  
 > 目标：为 5-8 人 AI Lab 设计一个 4 周内可由 1-2 人落地的技术情报 MVP，帮助团队持续跟踪 AI 技术动态，并形成可审核、可复盘的内部决策周报。
 
 ---
@@ -61,47 +62,7 @@ AI 社区每天都有大量新模型、论文、框架和工具出现。对 Lab 
 
 ### 2.1 架构图
 
-```mermaid
-flowchart LR
-    subgraph Sources["信息源"]
-        GH["GitHub<br/>Trending / Search API"]
-        HF["Hugging Face<br/>Models / Datasets"]
-        RSS["官方博客 / 技术媒体<br/>RSS"]
-    end
-
-    subgraph Pipeline["MVP 主流程"]
-        COL["Collector<br/>定时采集"]
-        TIER["Source Tier<br/>信源分层"]
-        NORM["Normalizer<br/>统一字段"]
-        FILTER["Filter & Cluster<br/>预筛 / 去重 / 事件聚类"]
-        PRE["Cheap LLM Prescreen<br/>AI 相关性预筛"]
-        SCORE["LLM Dimension Scoring<br/>分类 / 摘要 / 维度评分"]
-        RANK["Code Ranking<br/>公式算分 / 阈值精选"]
-        REVIEW["Human Review<br/>人工审核与修正"]
-        REPORT["Reporter<br/>Markdown 周报"]
-    end
-
-    subgraph Storage["配置与存储"]
-        CFG["config.yaml<br/>信源等级 / 关键词 / 阈值 / 权重"]
-        DB["SQLite<br/>原始条目 / 事件簇 / 分析结果 / 审核记录"]
-        PROMPT["Prompt Templates<br/>预筛 / 评分 / 摘要"]
-    end
-
-    GH --> COL
-    HF --> COL
-    RSS --> COL
-    COL --> TIER --> NORM --> FILTER --> PRE --> SCORE --> RANK --> REVIEW --> REPORT
-
-    CFG -.-> TIER
-    CFG -.-> FILTER
-    CFG -.-> RANK
-    PROMPT -.-> PRE
-    PROMPT -.-> SCORE
-    COL <--> DB
-    FILTER <--> DB
-    SCORE <--> DB
-    REVIEW <--> DB
-```
+![AI 技术情报雷达系统架构图](./assets/architecture.png)
 
 ### 2.2 关键模块
 
@@ -331,14 +292,18 @@ LLM 可以帮助摘要和初筛，但它不适合直接替代技术判断，尤�
 
 ### 1. 使用范围
 
-本方案允许并使用 LLM 辅助完成，主要用于：
+本方案允许并使用 LLM 辅助完成，各章节的模型参与情况如下：
 
-- 梳理题目要求和交付结构。
-- 生成方案初稿。
-- 比较 Agent 架构与固定 Pipeline 的取舍。
-- 将参考材料中的工程经验提炼为方案机制，例如信源分层、两阶段模型处理、代码化评分和事件聚类。
-- 改写文档表达，使其更适合 3-5 页方案交付。
-- 生成 Mermaid 架构图和周报样例。
+| 章节 | 模型参与程度 | 说明 |
+| --- | --- | --- |
+| 一、对题目的质疑与假设 | 初稿由模型生成 | Codex/GPT-5 根据题目分析生成了 4 个质疑点的初稿；人工调整了"信源比信息更重要"的论证逻辑，补充了信源分级表中 T1/T1.5/T2 的具体示例和处理策略 |
+| 二、架构图 | 模型生成 | Mermaid 代码由模型生成，人工微调了节点命名（如将"预筛"细化为"AI 相关性预筛"）和 Storage 子图与 Pipeline 的虚线连线关系 |
+| 二、Collector 模块说明 | 模型生成初稿 | 模型生成了三类信息源的对比表和选择理由；人工补充了"暂不接入 X、Reddit、arXiv"的判断依据 |
+| 二、Filter & Cluster 模块说明 | 模型生成初稿 | 去重规则和主条目优先级排序由模型生成；人工补充了事件聚类的具体判定维度（标题相似度、URL 域名、时间窗口、关键词重叠） |
+| 二、LLM 两阶段处理 & 评分 | 模型生成初稿 | 两阶段拆分思路和维度评分的 JSON 结构由模型生成；人工调整了评分公式权重（原稿实用性权重 0.25，人工调至 0.35）并补充了类别差异化阈值的说明 |
+| 二、周报样例 | 模型生成 | 样例内容和格式由模型生成，人工确认了数值合理性 |
+| 三、关键设计决策 | 人工主导，模型辅助 | "Agent vs Pipeline"的取舍分析由模型辅助比较；5 条决策的结论和论证方向均由人工确定，模型负责润色表达 |
+| 四、LLM 使用说明 | 人工撰写 | 本章节内容完全由人工撰写 |
 
 ### 2. 人工主导的内容
 
