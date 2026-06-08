@@ -39,3 +39,19 @@
 - **输出**：Markdown 周报 + 人工审核
 - **架构**：固定 Pipeline，非 Agent 主链路
 - **落地周期**：4 周 MVP，1-2 人可交付
+
+## 运行方式（MVP）
+
+```bash
+pip install -e ".[dev]"
+cp .env.example .env   # 填入 OPENAI_API_KEY / GITHUB_TOKEN
+
+radar collect   # 采集三类信源入库
+radar process   # 去重、聚类、过滤
+radar analyze   # LLM 预筛 + 维度评分 + 代码化综合评分
+radar report --out report.md   # 生成 Markdown 周报
+radar review --item-id 1 --verdict 推荐正确 --note "已安排复现"
+# 或一次跑完：radar all
+```
+
+测试：`pytest`
