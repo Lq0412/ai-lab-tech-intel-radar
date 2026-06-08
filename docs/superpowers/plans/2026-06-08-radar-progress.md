@@ -3,7 +3,7 @@
 > 最后更新：2026-06-08  
 > 工作目录：`C:\Users\EDY\Desktop\ai-lab-tech-intel-radar\.worktrees\radar-mvp`  
 > 分支：`feature/radar-mvp`  
-> 最新提交：`f94f2e6`
+> 最新提交：`1f6f8da`
 
 ---
 
@@ -148,6 +148,7 @@ radar analyze --no-quota --limit 50   # 旧行为
 ## 六、Git 提交历史（近期）
 
 ```text
+1f6f8da docs: add development progress handoff document
 f94f2e6 feat: precision tuning with top-8 report, per-source quota, and expanded github collection
 99963db feat: add analyze limit, feishu notify, and weekly github action
 eb1f28e feat: switch default llm to deepseek-v4-pro
@@ -157,7 +158,7 @@ eb1f28e feat: switch default llm to deepseek-v4-pro
 ba567ac chore: scaffold tech-intel-radar python project
 ```
 
-工作区状态：**干净**（`f94f2e6` 之后无未提交代码改动）。
+工作区状态：**干净**（`1f6f8da` 之后无未提交改动）。
 
 ---
 
@@ -190,6 +191,6 @@ ba567ac chore: scaffold tech-intel-radar python project
 | 2026-06-08 | MVP 19 个 Task 全部实现，43→56 测试通过 |
 | 2026-06-08 | 本地联调：collect 1846、DeepSeek API 验证通过 |
 | 2026-06-08 | 精选改造 `f94f2e6` 完成；Task 5 重采 1966 条后 analyze 中断于 31/50 |
-| 2026-06-08 | 进度文档创建，暂停开发 |
+| 2026-06-08 | 进度文档创建并提交 `1f6f8da`，README 增加进度链接，暂停开发 |
 
 **下次更新时**：在「九、进度更新日志」追加一行，并修改文首「最后更新」日期与第三节数据库数字。
