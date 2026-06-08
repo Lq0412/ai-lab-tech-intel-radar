@@ -7,6 +7,7 @@
 | 文档 | 说明 |
 | --- | --- |
 | [方案设计](docs/AI技术情报雷达-方案设计.md) | 正式交付物：质疑与假设、架构设计、关键决策、LLM 使用说明 |
+| [开发进度](docs/superpowers/plans/2026-06-08-radar-progress.md) | 当前进度、中断现场、回家续做清单 |
 | [架构图](docs/assets/architecture.png) | 系统架构示意图 |
 
 ## 参考材料
@@ -39,3 +40,22 @@
 - **输出**：Markdown 周报 + 人工审核
 - **架构**：固定 Pipeline，非 Agent 主链路
 - **落地周期**：4 周 MVP，1-2 人可交付
+
+## 运行方式（MVP）
+
+```bash
+pip install -e ".[dev]"
+cp .env.example .env   # 填入 DEEPSEEK_API_KEY / GITHUB_TOKEN
+
+radar collect   # 采集三类信源入库
+radar process   # 去重、聚类、过滤
+radar analyze   # LLM 分析（默认按配额：GitHub 20 + HF 15 + RSS 15）
+radar report --out report.md   # 生成 Markdown 周报
+radar notify --out report.md   # 推送到飞书机器人（需 FEISHU_WEBHOOK_URL）
+radar review --item-id 1 --verdict 推荐正确 --note "已安排复现"
+# 或一次跑完：radar all
+
+GitHub Actions 需在仓库 Secrets 配置：`DEEPSEEK_API_KEY`、`GITHUB_TOKEN`、（可选）`FEISHU_WEBHOOK_URL`。
+```
+
+测试：`pytest`

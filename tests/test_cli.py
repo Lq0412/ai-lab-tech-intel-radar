@@ -1,0 +1,113 @@
+from radar.models import TechItem
+from radar.config import Settings
+from radar.storage import Repository
+from radar import cli
+
+
+def settings():
+    return Settings(
+        weights={"practicality": 0.35, "influence": 0.30, "follow_cost": 0.20,
+                 "source_tier": 0.10, "freshness": 0.05},
+        tier_weight={"T1": 5, "T1.5": 4, "T2": 2},
+        thresholds={"tool_framework": 3.8, "default": 4.0},
+        github_min_stars=500, github_min_weekly_growth=50,
+        keywords=["llm", "model", "inference"],
+        title_similarity_threshold=0.6, time_window_days=7)
+
+
+class StubClient:
+    def complete_json(self, system, user):
+        if "is_relevant" in system:
+            return {"is_relevant": True}
+        return {"category": "tool_framework", "summary": "高吞吐推理框架",
+                "scores": {"practicality": 5, "influence": 5, "follow_cost": 4},
+                "boundary": {"good_for": "推理", "not_good_for": "训练",
+                             "risks": "兼容性"}}
+
+
+def make_repo_with_item():
+    repo = Repository(":memory:")
+    repo.init_schema()
+    repo.upsert_item(TechItem(
+        source="github", source_tier="T1.5", source_type="repo_index",
+        title="vLLM inference", url="https://github.com/vllm-project/vllm",
+        description="High-throughput LLM inference", published_at="2026-06-08",
+        metrics={"stars": 85000}, raw_id="github:vllm-project/vllm",
+        collected_at="2026-06-08T00:00:00"))
+    return repo
+
+
+def test_run_process_marks_clusters():
+    repo = make_repo_with_item()
+    kept = cli.run_process(repo, settings())
+    assert kept == 1
+    assert len(repo.list_items(only_unique=True)) == 1
+
+
+def test_run_analyze_scores_items():
+    repo = make_repo_with_item()
+    cli.run_process(repo, settings())
+    cli.run_analyze(repo, settings(), client=StubClient(), today="2026-06-08")
+    scored = repo.list_scored()
+    assert len(scored) == 1
+    assert scored[0].recommendation == "建议跟进"
+
+
+def test_run_report_renders_markdown():
+    repo = make_repo_with_item()
+    cli.run_process(repo, settings())
+    cli.run_analyze(repo, settings(), client=StubClient(), today="2026-06-08")
+    md = cli.run_report(repo, week="2026-W23")
+    assert "AI 技术情报周报 2026-W23" in md
+    assert "vLLM inference" in md
+
+
+def test_run_analyze_respects_limit():
+    repo = Repository(":memory:")
+    repo.init_schema()
+    names = ["vllm-inference", "langchain-agents", "transformers-nlp",
+               "openai-whisper", "stable-diffusion"]
+    for name, stars in zip(names, [1000, 2000, 3000, 4000, 5000]):
+        repo.upsert_item(TechItem(
+            source="github", source_tier="T1.5", source_type="repo_index",
+            title=name, url=f"https://github.com/x/{name}",
+            description="LLM inference", published_at="2026-06-08",
+            metrics={"stars": stars}, raw_id=f"github:{name}",
+            collected_at="2026-06-08T00:00:00"))
+    cli.run_process(repo, settings())
+    cli.run_analyze(repo, settings(), client=StubClient(), today="2026-06-08",
+                    limit=2)
+    assert len(repo.list_scored()) == 2
+
+
+def test_run_analyze_uses_quota():
+    repo = Repository(":memory:")
+    repo.init_schema()
+    repo.upsert_item(TechItem(
+        source="github", source_tier="T1.5", source_type="repo_index",
+        title="gh-llm", url="https://github.com/x/gh",
+        description="LLM inference", published_at="2026-06-08",
+        metrics={"stars": 9000}, raw_id="github:gh",
+        collected_at="2026-06-08T00:00:00"))
+    repo.upsert_item(TechItem(
+        source="huggingface", source_tier="T1.5", source_type="model_index",
+        title="hf-model", url="https://huggingface.co/x/hf",
+        description="LLM model", published_at="2026-06-08",
+        metrics={"downloads": 50000, "likes": 100}, raw_id="huggingface:hf",
+        collected_at="2026-06-08T00:00:00"))
+    cli.run_process(repo, settings())
+    cli.run_analyze(repo, settings(), client=StubClient(), today="2026-06-08",
+                    quota={"github": 1, "huggingface": 0, "rss": 0})
+    assert len(repo.list_scored()) == 1
+
+
+def test_run_review_persists_verdict():
+    repo = make_repo_with_item()
+    item_id = repo.item_id_by_raw("github:vllm-project/vllm")
+    cli.run_review(repo, item_id=item_id, verdict="推荐正确",
+                   note="已安排复现", reviewed_at="2026-06-08")
+    row = repo.conn.execute(
+        "SELECT verdict, note FROM reviews WHERE item_id=?", (item_id,)
+    ).fetchone()
+    assert row["verdict"] == "推荐正确"
+    assert row["note"] == "已安排复现"

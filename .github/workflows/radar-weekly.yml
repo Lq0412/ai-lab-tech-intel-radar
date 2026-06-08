@@ -1,0 +1,48 @@
+name: AI Tech Intel Radar Weekly
+
+on:
+  schedule:
+    - cron: "0 0 * * 1"   # 每周一 UTC 00:00（北京时间周一 08:00）
+  workflow_dispatch:
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Run radar pipeline
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          OPENAI_BASE_URL: https://api.deepseek.com
+          RADAR_MODEL: deepseek-v4-pro
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RADAR_DB_PATH: radar.db
+        run: |
+          radar collect
+          radar process
+          radar analyze
+          radar report --out report.md
+
+      - name: Notify Feishu
+        env:
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+        run: |
+          if [ -n "$FEISHU_WEBHOOK_URL" ]; then
+            radar notify --out report.md
+          else
+            echo "FEISHU_WEBHOOK_URL not set, skip notify"
+          fi
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-report
+          path: report.md

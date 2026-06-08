@@ -45,7 +45,7 @@
 解决「33 条建议跟进太多 + RSS 几乎不参与分析」：
 
 | 改动 | 说明 | 配置位置 |
-|------|------|---------|
+|------|------|-----------|
 | Top-N 精选 | 周报「建议跟进」最多 8 条，其余降级观察列表 | `ranking.max_recommendations: 8` |
 | 分源配额 | 分析候选按源分配：GitHub 20 + HF 15 + RSS 15 | `analyze.quota` |
 | GitHub 扩容 | `per_page` 50，新增 `topic:llm`、`topic:agent` 源 | `filter.github_per_page` + `sources.yaml` |
