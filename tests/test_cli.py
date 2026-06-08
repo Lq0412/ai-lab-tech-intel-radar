@@ -62,6 +62,24 @@ def test_run_report_renders_markdown():
     assert "vLLM inference" in md
 
 
+def test_run_analyze_respects_limit():
+    repo = Repository(":memory:")
+    repo.init_schema()
+    names = ["vllm-inference", "langchain-agents", "transformers-nlp",
+               "openai-whisper", "stable-diffusion"]
+    for name, stars in zip(names, [1000, 2000, 3000, 4000, 5000]):
+        repo.upsert_item(TechItem(
+            source="github", source_tier="T1.5", source_type="repo_index",
+            title=name, url=f"https://github.com/x/{name}",
+            description="LLM inference", published_at="2026-06-08",
+            metrics={"stars": stars}, raw_id=f"github:{name}",
+            collected_at="2026-06-08T00:00:00"))
+    cli.run_process(repo, settings())
+    cli.run_analyze(repo, settings(), client=StubClient(), today="2026-06-08",
+                    limit=2)
+    assert len(repo.list_scored()) == 2
+
+
 def test_run_review_persists_verdict():
     repo = make_repo_with_item()
     item_id = repo.item_id_by_raw("github:vllm-project/vllm")

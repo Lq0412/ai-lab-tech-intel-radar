@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import math
 from datetime import date
 
 from radar.config import Settings
-from radar.models import Analysis
+from radar.models import Analysis, TechItem
 
 
 def _parse_date(value: str | None) -> date | None:
@@ -54,3 +55,34 @@ def recommend(quality_score: float, category: str, settings: Settings) -> str:
     if quality_score >= threshold - 1.0:
         return "保持观察"
     return "暂不投入"
+
+
+def signal_score(item: TechItem, settings: Settings, today: str) -> float:
+    """Pre-LLM signal strength for candidate prioritization."""
+    tier = settings.tier_weight.get(item.source_tier, 2)
+    fresh = freshness_score(item.published_at, today)
+    if item.source == "github":
+        stars = item.metrics.get("stars", 0)
+        return tier * 10 + math.log10(max(stars, 1)) * 5 + fresh
+    if item.source == "huggingface":
+        downloads = item.metrics.get("downloads", 0)
+        likes = item.metrics.get("likes", 0)
+        return (
+            tier * 10
+            + math.log10(max(downloads, 1)) * 4
+            + math.log10(max(likes, 1)) * 2
+            + fresh
+        )
+    return tier * 10 + fresh * 2
+
+
+def select_candidates(items: list[TechItem], limit: int | None,
+                      today: str, settings: Settings) -> list[TechItem]:
+    if limit is None or limit <= 0 or len(items) <= limit:
+        return items
+    ranked = sorted(
+        items,
+        key=lambda it: signal_score(it, settings, today),
+        reverse=True,
+    )
+    return ranked[:limit]

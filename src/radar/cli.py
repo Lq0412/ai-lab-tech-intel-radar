@@ -17,7 +17,8 @@ from radar.llm.scoring import score_item
 from radar.models import Analysis
 from radar.pipeline.cluster import cluster_items
 from radar.pipeline.filter import apply_filters
-from radar.ranking import compute_quality, recommend
+from radar.notify import send_feishu
+from radar.ranking import compute_quality, recommend, select_candidates
 from radar.report import ReportRow, render_report
 from radar.storage import Repository
 
@@ -64,8 +65,9 @@ def run_process(repo: Repository, settings: Settings) -> int:
 
 
 def run_analyze(repo: Repository, settings: Settings, client: LLMClient,
-                today: str) -> int:
-    primaries = repo.list_items(only_unique=True)
+                today: str, limit: int | None = None) -> int:
+    primaries = select_candidates(
+        repo.list_items(only_unique=True), limit, today, settings)
     analyzed = 0
     for item in primaries:
         item_id = repo.item_id_by_raw(item.raw_id)
@@ -118,8 +120,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="radar")
     parser.add_argument("command",
                         choices=["collect", "process", "analyze", "report",
-                                 "review", "all"])
+                                 "notify", "review", "all"])
     parser.add_argument("--out", default="report.md")
+    parser.add_argument("--limit", type=int, default=50)
     parser.add_argument("--item-id", type=int)
     parser.add_argument("--verdict", default="")
     parser.add_argument("--note", default="")
@@ -139,11 +142,20 @@ def main(argv: list[str] | None = None) -> int:
     if args.command in ("analyze", "all"):
         client = LLMClient(model=runtime.model, api_key=runtime.openai_api_key,
                            base_url=runtime.openai_base_url)
-        print("analyzed:", run_analyze(repo, settings, client, today))
+        limit = args.limit if args.limit > 0 else None
+        print("analyzed:", run_analyze(repo, settings, client, today, limit=limit))
     if args.command in ("report", "all"):
         md = run_report(repo, week=_iso_week(today))
         Path(args.out).write_text(md, encoding="utf-8")
         print("report written:", args.out)
+    if args.command == "notify":
+        import os
+        webhook = os.getenv("FEISHU_WEBHOOK_URL", "")
+        if not webhook:
+            parser.error("FEISHU_WEBHOOK_URL is required for notify")
+        md = Path(args.out).read_text(encoding="utf-8")
+        send_feishu(webhook, md)
+        print("feishu notified:", args.out)
     if args.command == "review":
         if args.item_id is None:
             parser.error("--item-id is required for review")

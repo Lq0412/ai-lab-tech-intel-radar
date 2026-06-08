@@ -48,10 +48,13 @@ cp .env.example .env   # 填入 DEEPSEEK_API_KEY / GITHUB_TOKEN
 
 radar collect   # 采集三类信源入库
 radar process   # 去重、聚类、过滤
-radar analyze   # LLM 预筛 + 维度评分 + 代码化综合评分
+radar analyze --limit 50   # LLM 分析 Top 50 候选（默认 50）
 radar report --out report.md   # 生成 Markdown 周报
+radar notify --out report.md   # 推送到飞书机器人（需 FEISHU_WEBHOOK_URL）
 radar review --item-id 1 --verdict 推荐正确 --note "已安排复现"
 # 或一次跑完：radar all
+
+GitHub Actions 需在仓库 Secrets 配置：`DEEPSEEK_API_KEY`、`GITHUB_TOKEN`、（可选）`FEISHU_WEBHOOK_URL`。
 ```
 
 测试：`pytest`
