@@ -43,6 +43,8 @@ class Analysis:
     good_for: str = ""
     not_good_for: str = ""
     risks: str = ""
+    novelty: int = 0
+    highlight: str = ""
 
 
 @dataclass

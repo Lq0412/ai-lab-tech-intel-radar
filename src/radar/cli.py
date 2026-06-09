@@ -6,6 +6,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from radar.collectors.aihot import AihotCollector
 from radar.collectors.github import GithubCollector
 from radar.collectors.huggingface import HuggingFaceCollector
 from radar.collectors.rss import RssCollector
@@ -18,8 +19,8 @@ from radar.models import Analysis
 from radar.pipeline.cluster import cluster_items
 from radar.pipeline.filter import apply_filters
 from radar.notify import send_feishu
-from radar.ranking import (compute_quality, recommend, select_by_quota,
-                           select_candidates)
+from radar.ranking import (compute_quality, quota_key, recommend,
+                           select_by_quota, select_candidates)
 from radar.report import ReportRow, render_report
 from radar.storage import Repository
 
@@ -34,14 +35,23 @@ def run_collect(repo: Repository, settings: Settings, runtime: RuntimeConfig,
                                   per_page=settings.github_per_page),
         "huggingface": HuggingFaceCollector(),
         "rss": RssCollector(),
+        "aihot": AihotCollector(),
     }
     count = 0
     for source in sources:
         collector = collectors.get(source.kind)
         if collector is None:
             continue
-        for item in collector.collect(source, now=now):
+        try:
+            items = collector.collect(source, now=now)
+        except Exception as exc:  # noqa: BLE001 - one bad source must not abort the run
+            print(f"  [warn] source failed: {source.name} ({type(exc).__name__})")
+            continue
+        for item in items:
             repo.upsert_item(item)
+            metric = item.metrics.get("stars") or item.metrics.get("downloads") or 0
+            if metric:
+                repo.record_snapshot(item.raw_id, metric, captured_at=now[:10])
             count += 1
     return count
 
@@ -70,10 +80,13 @@ def run_analyze(repo: Repository, settings: Settings, client: LLMClient,
                 today: str, limit: int | None = None,
                 quota: dict[str, int] | None = None) -> int:
     items = repo.list_items(only_unique=True)
+    growth_of = lambda raw_id: repo.weekly_growth(raw_id, today)
     if quota:
-        primaries = select_by_quota(items, quota, today, settings)
+        primaries = select_by_quota(items, quota, today, settings,
+                                    growth_of=growth_of)
     else:
-        primaries = select_candidates(items, limit, today, settings)
+        primaries = select_candidates(items, limit, today, settings,
+                                      growth_of=growth_of)
     analyzed = 0
     for item in primaries:
         item_id = repo.item_id_by_raw(item.raw_id)
@@ -85,8 +98,9 @@ def run_analyze(repo: Repository, settings: Settings, client: LLMClient,
                                created_at=today)
             continue
         analysis = score_item(item_id, item, client)
+        bonus = settings.source_bonus.get(quota_key(item), 0.0)
         quality = compute_quality(analysis, item.source_tier, item.published_at,
-                                  settings, today)
+                                  settings, today, bonus=bonus)
         rec = recommend(quality, analysis.category, settings)
         repo.save_analysis(analysis, quality_score=quality, recommendation=rec,
                            created_at=today)
@@ -95,7 +109,10 @@ def run_analyze(repo: Repository, settings: Settings, client: LLMClient,
 
 
 def run_report(repo: Repository, week: str,
-               max_recommendations: int | None = None) -> str:
+               max_recommendations: int | None = None,
+               today: str | None = None) -> str:
+    if today is None:
+        today = date.today().isoformat()
     rows: list[ReportRow] = []
     for item in repo.list_items(only_unique=True):
         item_id = repo.item_id_by_raw(item.raw_id)
@@ -107,7 +124,12 @@ def run_report(repo: Repository, week: str,
             quality_score=a["quality_score"], category=a["category"],
             source_tier=item.source_tier, summary=a["summary"],
             good_for=a["good_for"], not_good_for=a["not_good_for"],
-            risks=a["risks"], url=item.url, related_urls=[]))
+            risks=a["risks"], url=item.url,
+            related_urls=repo.cluster_member_urls(item.raw_id),
+            highlight=a.get("highlight") or "",
+            weekly_growth=repo.weekly_growth(item.raw_id, today),
+            novelty=a.get("novelty") or 0,
+        ))
     return render_report(rows, week=week,
                          max_recommendations=max_recommendations)
 
@@ -158,7 +180,8 @@ def main(argv: list[str] | None = None) -> int:
               run_analyze(repo, settings, client, today, limit=limit, quota=quota))
     if args.command in ("report", "all"):
         md = run_report(repo, week=_iso_week(today),
-                        max_recommendations=settings.max_recommendations)
+                        max_recommendations=settings.max_recommendations,
+                        today=today)
         Path(args.out).write_text(md, encoding="utf-8")
         print("report written:", args.out)
     if args.command == "notify":

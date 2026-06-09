@@ -14,10 +14,23 @@ def fake_parse(url):
     return SimpleNamespace(entries=[entry])
 
 
+class FakeHttpResponse:
+    def raise_for_status(self):
+        return None
+
+    text = "<rss/>"
+
+
+class FakeHttpClient:
+    def get(self, url):
+        return FakeHttpResponse()
+
+
 def test_rss_collector_maps_to_techitem():
     source = Source(name="OpenAI Blog", url="https://openai.com/news/rss.xml",
                     tier="T1", type="official_blog", kind="rss")
-    items = RssCollector(parse_fn=fake_parse).collect(source, now="2026-06-08T00:00:00")
+    items = RssCollector(parse_fn=fake_parse, client=FakeHttpClient()).collect(
+        source, now="2026-06-08T00:00:00")
 
     assert len(items) == 1
     it = items[0]

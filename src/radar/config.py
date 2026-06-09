@@ -14,7 +14,9 @@ class Source:
     url: str
     tier: str
     type: str
-    kind: str  # "rss" | "github" | "huggingface"
+    kind: str  # "rss" | "github" | "huggingface" | "aihot"
+    sort: str = ""  # github: stars|updated; hf: downloads|trending
+    quota_group: str = ""  # analyze bucket; empty → kind or legacy inference
 
 
 @dataclass
@@ -29,8 +31,16 @@ class Settings:
     time_window_days: int
     max_recommendations: int = 8
     github_per_page: int = 50
+    hf_min_downloads: int = 10000
+    source_bonus: dict[str, float] = field(default_factory=dict)
     analyze_quota: dict[str, int] = field(
         default_factory=lambda: {"github": 20, "huggingface": 15, "rss": 15})
+    noise_keywords: list[str] = field(default_factory=lambda: [
+        "awesome", "tutorial", "tutorials", "roadmap", "for-beginners",
+        "from-scratch", "course", "courses", "book", "books", "cookbook",
+        "examples", "cheatsheet", "interview", "100-days", "learn",
+        "study", "curriculum", "guide", "papers", "paper-list", "collection",
+    ])
 
     def threshold_for(self, category: str) -> float:
         return self.thresholds.get(category, self.thresholds["default"])
@@ -67,8 +77,17 @@ def load_settings(path: Path) -> Settings:
         time_window_days=cluster["time_window_days"],
         max_recommendations=ranking.get("max_recommendations", 8),
         github_per_page=flt.get("github_per_page", 50),
+        hf_min_downloads=flt.get("hf_min_downloads", 10000),
+        source_bonus=ranking.get("source_bonus", {}),
         analyze_quota=analyze.get(
             "quota", {"github": 20, "huggingface": 15, "rss": 15}),
+        noise_keywords=[k.lower() for k in flt.get("noise_keywords", [
+            "awesome", "tutorial", "tutorials", "roadmap", "for-beginners",
+            "from-scratch", "course", "courses", "book", "books", "cookbook",
+            "examples", "cheatsheet", "interview", "100-days", "learn",
+            "study", "curriculum", "guide", "papers", "paper-list",
+            "collection",
+        ])],
     )
 
 

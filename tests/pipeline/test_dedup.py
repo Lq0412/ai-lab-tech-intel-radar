@@ -1,4 +1,5 @@
-from radar.pipeline.dedup import normalize_url, title_similarity, same_event
+from radar.pipeline.dedup import (canonical_entity, normalize_url,
+                                  title_similarity, same_event)
 
 
 def test_normalize_url_strips_query_and_trailing_slash():
@@ -26,3 +27,29 @@ def test_same_event_false_when_unrelated():
     assert same_event("https://a.com/x", "https://b.com/y",
                       "vLLM update", "New dataset for vision",
                       threshold=0.6) is False
+
+
+def test_canonical_entity_from_repo_slug():
+    assert canonical_entity("meta-llama/Llama-3.1-8B-Instruct") == \
+        "meta-llama/llama-3.1-8b-instruct"
+
+
+def test_same_event_true_for_matching_github_and_hf_slug():
+    assert same_event(
+        "https://github.com/meta-llama/Llama-3.1-8B-Instruct",
+        "https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct",
+        "meta-llama/Llama-3.1-8B-Instruct",
+        "meta-llama/Llama-3.1-8B-Instruct",
+        threshold=0.6,
+    ) is True
+
+
+def test_same_event_true_when_rss_mentions_model_slug():
+    assert same_event(
+        "https://huggingface.co/deepseek-ai/DeepSeek-R1-0528",
+        "https://huggingface.co/blog/deepseek-r1",
+        "deepseek-ai/DeepSeek-R1-0528",
+        "DeepSeek R1 0528 release notes",
+        threshold=0.6,
+        desc_b="Announcing DeepSeek-R1-0528 on Hugging Face",
+    ) is True

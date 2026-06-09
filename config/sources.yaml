@@ -4,28 +4,76 @@ sources:
     tier: T1
     type: official_blog
     kind: rss
+    quota_group: rss_official
   - name: Hugging Face Blog
     url: https://huggingface.co/blog/feed.xml
     tier: T1
     type: official_blog
     kind: rss
+    quota_group: rss_official
+  - name: AI HOT 精选
+    url: https://aihot.virxact.com/feed
+    tier: T1.5
+    type: media
+    kind: rss
+    quota_group: rss_aihot
+  - name: AI HOT 日报
+    url: daily
+    tier: T1.5
+    type: article
+    kind: aihot
+    quota_group: aihot
+  - name: InfoQ 中文
+    url: https://www.infoq.cn/feed
+    tier: T2
+    type: media
+    kind: rss
+    quota_group: rss_chinese
+  - name: 量子位
+    url: https://www.qbitai.com/feed
+    tier: T2
+    type: media
+    kind: rss
+    quota_group: rss_chinese
   - name: GitHub Trending AI
-    url: "topic:artificial-intelligence stars:>500"
+    url: "topic:artificial-intelligence created:>2026-04-01 stars:>100"
     tier: T1.5
     type: repo_index
     kind: github
+    sort: stars
   - name: Hugging Face Models
     url: "pipeline_tag:text-generation"
     tier: T1.5
     type: model_index
     kind: huggingface
-  - name: GitHub Trending LLM
-    url: "topic:llm stars:>500"
+    sort: trendingScore
+  - name: Hugging Face Multimodal
+    url: "pipeline_tag:image-text-to-text"
+    tier: T1.5
+    type: model_index
+    kind: huggingface
+    sort: trendingScore
+  - name: GitHub New & Rising LLM
+    url: "topic:llm created:>2026-04-01 stars:>80"
     tier: T1.5
     type: repo_index
     kind: github
-  - name: GitHub Trending Agent
-    url: "topic:agent stars:>300"
+    sort: stars
+  - name: GitHub New & Rising Agent
+    url: "topic:agent created:>2026-04-01 stars:>50"
     tier: T1.5
     type: repo_index
     kind: github
+    sort: stars
+  - name: GitHub Recently Active LLM
+    url: "topic:llm stars:>2000 pushed:>2026-05-10"
+    tier: T1.5
+    type: repo_index
+    kind: github
+    sort: updated
+  - name: GitHub Recently Active Agents
+    url: "topic:agent stars:>1000 pushed:>2026-05-10"
+    tier: T1.5
+    type: repo_index
+    kind: github
+    sort: updated

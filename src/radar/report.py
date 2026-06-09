@@ -16,6 +16,9 @@ class ReportRow:
     risks: str
     url: str
     related_urls: list[str] = field(default_factory=list)
+    highlight: str = ""
+    weekly_growth: int = 0
+    novelty: int = 0
 
 
 def render_report(rows: list[ReportRow], week: str,
@@ -53,6 +56,9 @@ def render_report(rows: list[ReportRow], week: str,
                 f"- 分类：{r.category}",
                 f"- 综合建议：{r.recommendation}",
                 f"- 综合分：{r.quality_score}/5",
+                f"- 本周亮点：{r.highlight or '无明显新进展'}",
+                f"- 本周增长：+{r.weekly_growth}（star/下载）",
+                f"- 新颖度：{r.novelty}/5",
                 f"- 摘要：{r.summary}",
                 f"- 能力边界：适合 {r.good_for}；不适合 {r.not_good_for}；"
                 f"风险 {r.risks}", "",

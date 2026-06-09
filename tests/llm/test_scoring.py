@@ -39,3 +39,17 @@ def test_score_item_clamps_out_of_range_scores():
     a = score_item(item_id=1, item=item(), client=StubClient(payload))
     assert a.practicality == 5
     assert a.influence == 1
+
+
+def test_score_item_parses_novelty_and_highlight():
+    payload = {
+        "category": "tool_framework",
+        "summary": "新发布的推理框架。",
+        "highlight": "本周发布 v0.2，支持多卡并行",
+        "scores": {"practicality": 4, "influence": 3, "follow_cost": 4,
+                   "novelty": 5},
+        "boundary": {"good_for": "推理", "not_good_for": "训练", "risks": "早期"},
+    }
+    a = score_item(item_id=3, item=item(), client=StubClient(payload))
+    assert a.novelty == 5
+    assert a.highlight == "本周发布 v0.2，支持多卡并行"

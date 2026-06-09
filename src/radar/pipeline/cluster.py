@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from radar.models import TechItem
-from radar.pipeline.dedup import same_event
+from radar.pipeline.dedup import same_item_event
 
 TYPE_RANK = {
     "official_blog": 100,
@@ -40,7 +40,7 @@ def cluster_items(items: list[TechItem], threshold: float) -> list[Cluster]:
         placed = False
         for cluster in clusters:
             p = cluster.primary
-            if same_event(it.url, p.url, it.title, p.title, threshold):
+            if same_item_event(it, p, threshold):
                 cluster.members.append(it)
                 if primary_priority(it.source_type, it.source_tier) > \
                         primary_priority(p.source_type, p.source_tier):

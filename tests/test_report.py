@@ -49,3 +49,17 @@ def test_render_report_no_cap_keeps_all():
     rows = [row(f"工具{i}", "建议跟进", score=4.5) for i in range(10)]
     md = render_report(rows, week="2026-W23")
     assert "建议跟进：10 项" in md
+
+
+def test_render_report_shows_delta_fields():
+    r = ReportRow(
+        title="acme/new-agent", recommendation="建议跟进", quality_score=4.2,
+        category="tool_framework", source_tier="T1.5",
+        summary="新兴 Agent 框架", good_for="原型", not_good_for="生产",
+        risks="早期", url="https://github.com/acme/new-agent",
+        highlight="本周 star 突破 1000", weekly_growth=420, novelty=5,
+    )
+    md = render_report([r], week="2026-W24")
+    assert "本周亮点：本周 star 突破 1000" in md
+    assert "本周增长：+420" in md
+    assert "新颖度：5/5" in md

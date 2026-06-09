@@ -21,7 +21,7 @@ class GithubCollector:
         headers = {"Accept": "application/vnd.github+json"}
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
-        params = {"q": source.url, "sort": "stars",
+        params = {"q": source.url, "sort": source.sort or "stars",
                   "order": "desc", "per_page": self.per_page}
         resp = self.client.get(API, params=params, headers=headers)
         resp.raise_for_status()
@@ -35,10 +35,15 @@ class GithubCollector:
                 title=full_name,
                 url=repo["html_url"],
                 description=repo.get("description") or "",
-                published_at=(repo.get("pushed_at") or "")[:10] or None,
+                published_at=(
+                    (repo.get("pushed_at") or repo.get("created_at") or "")[:10]
+                    or None
+                ),
                 metrics={
                     "stars": repo.get("stargazers_count", 0),
                     "language": repo.get("language") or "",
+                    "pushed_at": (repo.get("pushed_at") or "")[:10],
+                    "created_at": (repo.get("created_at") or "")[:10],
                 },
                 raw_id=f"github:{full_name}",
                 collected_at=now,

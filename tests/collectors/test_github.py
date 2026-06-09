@@ -59,3 +59,28 @@ def test_github_collector_passes_per_page_param():
     GithubCollector(client=fake, token="", per_page=50).collect(
         source, now="2026-06-08T00:00:00")
     assert fake.last_params["per_page"] == 50
+
+
+def test_github_collector_respects_sort_and_records_created():
+    payload = {"items": [{
+        "full_name": "acme/new-agent",
+        "html_url": "https://github.com/acme/new-agent",
+        "description": "Fresh agent toolkit",
+        "stargazers_count": 1200,
+        "language": "Python",
+        "created_at": "2026-05-15T08:00:00Z",
+        "pushed_at": "2026-06-08T12:00:00Z",
+    }]}
+    fake = FakeClient(payload)
+    source = Source(
+        name="GitHub Active Agents", url="topic:agent stars:>300",
+        tier="T1.5", type="repo_index", kind="github", sort="updated",
+    )
+    items = GithubCollector(client=fake, token="").collect(
+        source, now="2026-06-09T00:00:00")
+
+    assert fake.last_params["sort"] == "updated"
+    # published_at reflects last activity (pushed_at), not repo creation
+    assert items[0].published_at == "2026-06-08"
+    assert items[0].metrics["pushed_at"] == "2026-06-08"
+    assert items[0].metrics["created_at"] == "2026-05-15"

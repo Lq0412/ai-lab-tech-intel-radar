@@ -73,3 +73,48 @@ def test_select_by_quota_picks_highest_signal():
     picked = select_by_quota(items, {"github": 1}, today="2026-06-08", settings=s)
     assert len(picked) == 1
     assert picked[0].title == "high"
+
+
+def test_select_by_quota_splits_rss_groups():
+    from radar.ranking import select_by_quota
+    s = settings()
+
+    def rss_item(title, quota_group, tier="T1"):
+        return TechItem(
+            source="rss", source_tier=tier, source_type="official_blog",
+            title=title, url=f"https://example.com/{title}",
+            description="", published_at="2026-06-08",
+            metrics={"quota_group": quota_group},
+            raw_id=f"rss:{title}", collected_at="2026-06-08",
+        )
+
+    items = [
+        rss_item("official-a", "rss_official"),
+        rss_item("official-b", "rss_official"),
+        rss_item("cn-a", "rss_chinese", tier="T2"),
+        rss_item("aihot-a", "rss_aihot", tier="T1.5"),
+        rss_item("daily-a", "aihot", tier="T1.5"),
+    ]
+    picked = select_by_quota(
+        items,
+        {"rss_official": 1, "rss_chinese": 1, "rss_aihot": 1, "aihot": 1},
+        today="2026-06-08", settings=s,
+    )
+    groups = {it.metrics["quota_group"] for it in picked}
+    assert groups == {"rss_official", "rss_chinese", "rss_aihot", "aihot"}
+
+
+def test_select_by_quota_prefers_weekly_growth():
+    from radar.ranking import select_by_quota
+    s = settings()
+    items = [
+        item("github", "giant", stars=50000),
+        item("github", "rising", stars=1200),
+    ]
+    growth = {"github:giant": 0, "github:rising": 800}
+    picked = select_by_quota(
+        items, {"github": 1}, today="2026-06-09", settings=s,
+        growth_of=lambda raw_id: growth.get(raw_id, 0),
+    )
+    assert len(picked) == 1
+    assert picked[0].title == "rising"

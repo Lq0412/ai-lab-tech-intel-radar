@@ -1,8 +1,9 @@
 ranking:
   weights:
-    practicality: 0.35
-    influence: 0.30
-    follow_cost: 0.20
+    practicality: 0.30
+    influence: 0.20
+    novelty: 0.20
+    follow_cost: 0.15
     source_tier: 0.10
     freshness: 0.05
   tier_weight:
@@ -16,11 +17,16 @@ ranking:
     article: 4.2
     default: 4.0
   max_recommendations: 8
+  source_bonus:
+    rss_chinese: 0.7
+    rss_aihot: 0.5
+    aihot: 0.5
 
 filter:
-  github_min_stars: 500
+  github_min_stars: 100
   github_min_weekly_growth: 50
   github_per_page: 50
+  hf_min_downloads: 5000
   keywords:
     - ai
     - llm
@@ -29,6 +35,39 @@ filter:
     - agent
     - rag
     - transformer
+    - 人工智能
+    - 大模型
+    - 智能体
+    - gpt
+    - deepseek
+  noise_keywords:
+    - awesome
+    - tutorial
+    - tutorials
+    - roadmap
+    - for-beginners
+    - from-scratch
+    - course
+    - courses
+    - book
+    - books
+    - cookbook
+    - examples
+    - cheatsheet
+    - interview
+    - 100-days
+    - learn
+    - study
+    - curriculum
+    - guide
+    - papers
+    - paper-list
+    - collection
+    - deepfake
+    - face swap
+    - faceswap
+    - face-swap
+    - nsfw
 
 cluster:
   title_similarity_threshold: 0.6
@@ -36,6 +75,9 @@ cluster:
 
 analyze:
   quota:
-    github: 20
-    huggingface: 15
-    rss: 15
+    github: 15
+    huggingface: 12
+    rss_official: 6
+    rss_aihot: 5
+    rss_chinese: 5
+    aihot: 4
