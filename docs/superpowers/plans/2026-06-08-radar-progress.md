@@ -1,7 +1,7 @@
 # AI 技术情报雷达 · 开发进度
 
 > 最后更新：2026-06-08
-> 工作目录：`C:\Users\Lq304\Desktop\ai-lab-tech-intel-radar`
+> 工作目录：仓库根目录（`main` 分支，已弃用 worktree）
 > 分支：`main`（已合并 `feature/radar-mvp`）
 > 最新提交：`6afb4fe`（main）
 
@@ -103,7 +103,7 @@
 ## 五、关键路径与命令速查
 
 ```text
-工作目录  .worktrees/radar-mvp
+工作目录  仓库根目录（main）
 配置      config/settings.yaml  config/sources.yaml  .env
 数据库    radar.db（本地，不提交）
 输出      report.md
@@ -174,5 +174,6 @@ ba567ac chore: scaffold tech-intel-radar python project
 | 2026-06-08 | 主仓库同步进度文档副本（`docs/superpowers/plans/`） |
 | 2026-06-08 | 新机器：合并 feature/radar-mvp → main，全量验证通过（1966→1104→45→8推荐） |
 | 2026-06-08 | 飞书推送验证通过，GitHub Secrets 配置完成，Actions 手动触发 |
+| 2026-06-08 | 清理 `.worktrees/radar-mvp`，统一在 `main` 根目录开发 |
 
 **下次更新时**：在「九、进度更新日志」追加一行，并修改文首「最后更新」日期与第三节数据库数字。
